@@ -1322,6 +1322,28 @@ static int run(struct global_context *glctx, struct context *c)
 	if(!make_bmp_file(c)) goto done;
 
 	defaultbmp(glctx, c);
+	c->filename = "q/rgb16os2.bmp";
+	c->bpp = 16;
+	c->pal_entries = 0;
+	c->headersize = 12;
+	c->nbits[I_R] = 5; c->bf_shift[I_R] = 10;
+	c->nbits[I_G] = 5; c->bf_shift[I_G] = 5;
+	c->nbits[I_B] = 5; c->bf_shift[I_B] = 0;
+	set_calculated_fields(c);
+	if (!make_bmp_file(c)) goto done;
+
+	defaultbmp(glctx, c);
+	c->filename = "q/rgb32os2.bmp";
+	c->bpp = 32;
+	c->pal_entries = 0;
+	c->headersize = 12;
+	c->nbits[I_R] = 8; c->bf_shift[I_R] = 16;
+	c->nbits[I_G] = 8; c->bf_shift[I_G] = 8;
+	c->nbits[I_B] = 8; c->bf_shift[I_B] = 0;
+	set_calculated_fields(c);
+	if (!make_bmp_file(c)) goto done;
+
+	defaultbmp(glctx, c);
 	c->filename = "q/pal8os2v2-16.bmp";
 	c->headersize = 16;
 	c->pal_entries = 256;
