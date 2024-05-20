@@ -1298,6 +1298,14 @@ static int run(struct global_context *glctx, struct context *c)
 	if(!make_bmp_file(c)) goto done;
 
 	defaultbmp(glctx, c);
+	c->filename = "q/pal8os2offs.bmp";
+	c->headersize = 12;
+	c->pal_entries = 256;
+	c->extrabytessize = 100;
+	set_calculated_fields(c);
+	if (!make_bmp_file(c)) goto done;
+
+	defaultbmp(glctx, c);
 	c->filename = "q/pal8os2-sz.bmp";
 	c->headersize = 12;
 	c->pal_entries = 256;
