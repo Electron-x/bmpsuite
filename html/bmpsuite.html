@@ -858,6 +858,17 @@ level of support for it is arguably not important.</p>
  </tr>
 
  <tr>
+  <td class=bad>b/nopalette.bmp</td>
+  <td>3</td>
+  <td class=b>N/A</td>
+  <td class=b><img src="../b/nopalette.bmp"></td>
+  <td>The required color table is missing in this file. This case is
+   tricky because a <i>biClrUsed</i> value of 0 indicates a complete
+   color table. In the case of a packed memory DIB, it is no longer
+   possible to determine the start of the bitmap bits.</td>
+ </tr>
+
+ <tr>
   <td class=bad>b/pal8badindex.bmp</td>
   <td>3</td>
   <td class=b>N/A</td>

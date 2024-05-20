@@ -1426,6 +1426,12 @@ static int run(struct global_context *glctx, struct context *c)
 	if(!make_bmp_file(c)) goto done;
 
 	defaultbmp(glctx, c);
+	c->filename = "b/nopalette.bmp";
+	c->pal_entries = 0;
+	set_calculated_fields(c);
+	if (!make_bmp_file(c)) goto done;
+
+	defaultbmp(glctx, c);
 	c->filename = "g/pal8topdown.bmp";
 	c->topdown = 1;
 	set_calculated_fields(c);
