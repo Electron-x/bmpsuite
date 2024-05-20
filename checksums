@@ -41,10 +41,13 @@ f62ee13095cdd55c18c718e063e046ad *g/rgb16-565.bmp
 6af5062aa3a6907e487d8c8fba238add *g/rgb16.bmp
 6bea4fe34c0d3e98df6c47b88a44318b *g/rgb16bfdef.bmp
 8137a48d037df17bf6d7ff4489beeb87 *g/rgb24.bmp
+05e42cb8b4254697ca5d740d760694e1 *g/rgb24calibr.bmp
 e7f7174a4ab82a9efc28e76738d56c0a *g/rgb24pal.bmp
 62ac37dfdae65ecdec3d89518d46a6cb *g/rgb32.bmp
 79e1b05f6473e780448fbeed814fb249 *g/rgb32bf.bmp
 c938023e6f3ae121fbd75ace749d71ec *g/rgb32bfdef.bmp
+49a38d285b241a33b30154c7a1074767 *q/cmyk.bmp
+6c1519115a386e730edbcc84f77d0ccb *q/devicergb.bmp
 868d71eda188973c5d632815814f44b1 *q/pal1huffmsb.bmp
 29cce427b79fe3abf5b43f8f7a1156df *q/pal1p1.bmp
 5b782e8a45dd587dbdfca404c91dba16 *q/pal2.bmp

@@ -150,6 +150,8 @@ struct context {
 	int ba_fmt;
 	int ba_hdr_size;
 	int huff_lsb; // No longer used
+	int cstype; // Logical color space: 0=LCS_CALIBRATED_RGB, 1=LCS_DEVICE_RGB, 2=LCS_DEVICE_CMYK
+	int srgb_to_linear; // Gamma decoding from sRGB to linear (16/24/32 bpp only)
 };
 
 static void set_int16(struct context *c, size_t offset, int v)
@@ -429,7 +431,9 @@ static void set_pixel(struct context *c, int x, int y,
 	else if(c->bpp==32) {
 		offs = row_offs + 4*x;
 		for(z=0; z<3; z++) {
-			qclr.s[z] = quantize(clr->s[z], 1<<c->nbits[z], x, y, 0, 0, 0);
+			tmpd = c->srgb_to_linear ? srgb_to_linear(clr->s[z]) : clr->s[z];
+			qclr.s[z] = quantize(tmpd, 1<<c->nbits[z], x, y, 0, 0, 0);
+			if(c->cstype==2) qclr.s[z] = 255-qclr.s[z];
 		}
 		if(c->nbits[I_A])
 			qclr.s[I_A] = quantize(clr->s[I_A], 1<<c->nbits[I_A], x, y, c->dither[I_A], 0, 0);
@@ -444,7 +448,8 @@ static void set_pixel(struct context *c, int x, int y,
 	else if(c->bpp==24) {
 		offs = row_offs + 3*x;
 		for(z=0; z<3; z++) {
-			qclr.s[z] = quantize(clr->s[z], 256, x, y, 0, 0, 0);
+			tmpd = c->srgb_to_linear ? srgb_to_linear(clr->s[z]) : clr->s[z];
+			qclr.s[z] = quantize(tmpd, 256, x, y, 0, 0, 0);
 		}
 		if(c->swaprg) {
 			u = qclr.s[I_R]; qclr.s[I_R] = qclr.s[I_G]; qclr.s[I_G] = u;
@@ -456,10 +461,11 @@ static void set_pixel(struct context *c, int x, int y,
 	else if(c->bpp==16) {
 		offs = row_offs + 2*x;
 		for(z=0; z<3; z++) {
+			tmpd = c->srgb_to_linear ? srgb_to_linear(clr->s[z]) : clr->s[z];
 			if(c->dither[z]==1)
-				qclr.s[z] = quantize(clr->s[z], 1<<c->nbits[z], x, y, 1, 1, 1);
+				qclr.s[z] = quantize(tmpd, 1<<c->nbits[z], x, y, 1, 1, 1);
 			else
-				qclr.s[z] = quantize(clr->s[z], 1<<c->nbits[z], x, y, 0, 0, 0);
+				qclr.s[z] = quantize(tmpd, 1<<c->nbits[z], x, y, 0, 0, 0);
 		}
 		if(c->nbits[I_A])
 			qclr.s[I_A] = quantize(clr->s[I_A], 1<<c->nbits[I_A], x, y, c->dither[I_A], 0, 0);
@@ -1067,31 +1073,46 @@ static void write_bitmapinfoheader(struct context *c)
 		}
 	}
 	if(c->headersize>=108) {
-
 		if(c->headersize==108) {
+			// Logical color space.
 			// Modern documentation lists LCS_CALIBRATED_RGB as the only legal
 			// CSType for v4 bitmaps.
-			set_uint32(c,14+56,0); // CSType = LCS_CALIBRATED_RGB
+			set_uint32(c,14+56,c->cstype);
 
 			// Chromaticity endpoints.
-			// I don't know much about what should go here. These are the
-			// chromaticities for sRGB.
+			// These endpoints are used to translate calibrated RGB values into
+			// device color coordinates.
 			// These values are in 2.30 fixed-point format.
-			set_uint32(c,14+60, fixed_2_30(0.6400)); // red-x
-			set_uint32(c,14+64, fixed_2_30(0.3300)); // red-y
-			set_uint32(c,14+68, fixed_2_30(0.0300)); // red-z
-			set_uint32(c,14+72, fixed_2_30(0.3000)); // green-x
-			set_uint32(c,14+76, fixed_2_30(0.6000)); // green-y
-			set_uint32(c,14+80, fixed_2_30(0.1000)); // green-z
-			set_uint32(c,14+84, fixed_2_30(0.1500)); // blue-x
-			set_uint32(c,14+88, fixed_2_30(0.0600)); // blue-y
-			set_uint32(c,14+92, fixed_2_30(0.7900)); // blue-z
+			if(c->cstype==0) { // CSType = LCS_CALIBRATED_RGB
+				// These are the chromaticities for sRGB.
+				set_uint32(c,14+60, fixed_2_30(c->swaprg?0.3000:0.6400)); // red-x
+				set_uint32(c,14+64, fixed_2_30(c->swaprg?0.6000:0.3300)); // red-y
+				set_uint32(c,14+68, fixed_2_30(c->swaprg?0.1000:0.0300)); // red-z
+				set_uint32(c,14+72, fixed_2_30(c->swaprg?0.6400:0.3000)); // green-x
+				set_uint32(c,14+76, fixed_2_30(c->swaprg?0.3300:0.6000)); // green-y
+				set_uint32(c,14+80, fixed_2_30(c->swaprg?0.0300:0.1000)); // green-z
+				set_uint32(c,14+84, fixed_2_30(0.1500)); // blue-x
+				set_uint32(c,14+88, fixed_2_30(0.0600)); // blue-y
+				set_uint32(c,14+92, fixed_2_30(0.7900)); // blue-z
+			}
+			else { // CSType = LCS_DEVICE_RGB or CSType = LCS_DEVICE_CMYK
+				// Set the same endpoint for all primaries (results in a grayscale
+				// image) to see if they are ignored by the CMM or device driver.
+				set_uint32(c,14+60, fixed_2_30(0.9505)); // red-x
+				set_uint32(c,14+64, fixed_2_30(1.0000)); // red-y
+				set_uint32(c,14+68, fixed_2_30(1.0890)); // red-z
+				set_uint32(c,14+72, fixed_2_30(0.9505)); // green-x
+				set_uint32(c,14+76, fixed_2_30(1.0000)); // green-y
+				set_uint32(c,14+80, fixed_2_30(1.0890)); // green-z
+				set_uint32(c,14+84, fixed_2_30(0.9505)); // blue-x
+				set_uint32(c,14+88, fixed_2_30(1.0000)); // blue-y
+				set_uint32(c,14+92, fixed_2_30(1.0890)); // blue-z
+			}
 
-			// I'm not sure if this is supposed to be the "image file gamma", like
-			// 1.0/2.2, or the "display gamma", like 2.2.
-			// Petzold's "Programming Windows" book suggests that "2.2 (encoded
-			// as 0x23333)" would be reasonable, so that's what I'm going with.
-			gamma = 2.2;
+			// Tone response curves.
+			// Indicates which transfer functions were used to encode the primary colors.
+			// 1.0 = linear mapping, 2.2 = gamma 2.2 (~sRGB curve)
+			gamma = c->srgb_to_linear ? 1.0 : 2.2;
 			// These values are in 16.16 fixed-point format.
 			set_uint32(c,14+ 96, fixed_16_16(gamma)); // bV4GammaRed
 			set_uint32(c,14+100, fixed_16_16(gamma)); // bV4GammaGreen
@@ -1907,6 +1928,37 @@ static int run(struct global_context *glctx, struct context *c)
 	c->pal_entries = 300;
 	set_calculated_fields(c);
 	if(!make_bmp_file(c)) goto done;
+
+	defaultbmp(glctx, c);
+	c->filename = "g/rgb24calibr.bmp";
+	c->bpp = 24;
+	c->pal_entries = 0;
+	c->headersize = 108;
+	c->swaprg = 1;
+	c->srgb_to_linear = 1;
+	set_calculated_fields(c);
+	if (!make_bmp_file(c)) goto done;
+
+	defaultbmp(glctx, c);
+	c->filename = "q/devicergb.bmp";
+	c->bpp = 24;
+	c->pal_entries = 0;
+	c->headersize = 108;
+	c->cstype = 1;
+	set_calculated_fields(c);
+	if (!make_bmp_file(c)) goto done;
+
+	defaultbmp(glctx, c);
+	c->filename = "q/cmyk.bmp";
+	c->bpp = 32;
+	c->pal_entries = 0;
+	c->headersize = 108;
+	c->nbits[I_R] = 8; c->bf_shift[I_R] = 16;
+	c->nbits[I_G] = 8; c->bf_shift[I_G] = 8;
+	c->nbits[I_B] = 8; c->bf_shift[I_B] = 0;
+	c->cstype = 2;
+	set_calculated_fields(c);
+	if (!make_bmp_file(c)) goto done;
 
 	defaultbmp(glctx, c);
 	c->filename = "g/rgb32.bmp";

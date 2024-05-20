@@ -379,6 +379,41 @@ level of support for it is arguably not important.</p>
  </tr>
 
  <tr>
+  <td>g/rgb24calibr.bmp</td>
+  <td>4</td>
+  <td class=b><img src="rgb24.png"></td>
+  <td class=b><img src="../g/rgb24calibr.bmp"></td>
+  <td>A calibrated v4 bitmap with linear tone mapping (gamma = 1.0)
+   and with the chromaticity endpoints for red and green swapped.</td>
+ </tr>
+
+ <tr>
+  <td>q/devicergb.bmp</td>
+  <td>4</td>
+  <td class=b><img src="rgb24.png"></td>
+  <td class=b><img src="../q/devicergb.bmp"></td>
+  <td>This v4 bitmap already contains colors that are adapted to the output
+   device and has been marked accordingly. All primaries are set to the
+   same endpoints (results in a greyscale image) to see if they are ignored
+   by the color manager.
+   This format was dropped shortly after its introduction (probably because
+   of its device dependency).</td>
+ </tr>
+
+ <tr>
+  <td>q/cmyk.bmp</td>
+  <td>4</td>
+  <td class=b><img src="cmyk.png"></td>
+  <td class=b><img src="../q/cmyk.bmp"></td>
+  <td>A v4 bitmap with device-dependent CMYK data (the RGB color values
+   were simply inverted here). All primaries are set to the same endpoints
+   (results in a greyscale image) to see if they are ignored by the color
+   manager.
+   This format was dropped shortly after its introduction (probably because
+   of its device dependency).</td>
+ </tr>
+
+ <tr>
   <td>g/pal8v5.bmp</td>
   <td>5</td>
   <td class=b><img src="pal8.png"></td>
