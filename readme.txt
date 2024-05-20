@@ -70,3 +70,7 @@ Then, append six "EOL" codes to the data. Assuming the raw fax data ends with
 The problem is that this requires knowing what bit the data ended on. It should
 always be safe to append 00 10 01 00 10 01 00 10 01, though this has the extra
 complication of relying on a feature called "fill bits".
+
+The files data/cram.dat and data/cvid.dat were created as follows using FFmpeg:
+ffmpeg -i g/rgb16.bmp -f image2 -codec msvideo1 -s 124x64 -frames 1 -update 1 data/cram.dat
+ffmpeg -i g/rgb24.bmp -f image2 -codec cinepak -s 124x64 -frames 1 -update 1 data/cvid.dat

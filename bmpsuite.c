@@ -106,6 +106,8 @@ struct context {
 #define CMPR_PNG  5
 #define CMPR_HUFFMAN1D 3
 #define CMPR_RLE24     4
+#define CMPR_CRAM      0x4D415243 // 'CRAM'
+#define CMPR_CVID      0x64697663 // 'cvid'
 #define BI_BITFIELDS      3
 #define BI_ALPHABITFIELDS 6
 	int compression;
@@ -1131,8 +1133,12 @@ static int make_bmp(struct context *c)
 		ret = write_bits_fromfile(c,"data/image.jpg", 0);
 	else if(c->compression==CMPR_PNG)
 		ret = write_bits_fromfile(c,"data/image.png", 0);
+	else if (c->compression == CMPR_CRAM)
+		ret = write_bits_fromfile(c,"data/cram.dat", 0);
+	else if (c->compression == CMPR_CVID)
+		ret = write_bits_fromfile(c,"data/cvid.dat", 0);
 	else if(c->compression==CMPR_HUFFMAN1D && c->headersize==64) {
-		ret = write_bits_fromfile(c, "data/pal1huff.g3", (c->huff_lsb?1:0));
+		ret = write_bits_fromfile(c,"data/pal1huff.g3", (c->huff_lsb?1:0));
 	}
 	else
 		ret = write_bits(c);
@@ -2152,6 +2158,24 @@ static int run(struct global_context *glctx, struct context *c)
 	c->pal_entries = 256;
 	set_calculated_fields(c);
 	if(!make_bmp_file(c)) goto done;
+
+	defaultbmp(glctx, c);
+	c->filename = "x/msvideo1.bmp";
+	c->w = 124; c->h = 64;
+	c->bpp = 16;
+	c->compression = CMPR_CRAM;
+	c->pal_entries = 0;
+	set_calculated_fields(c);
+	if (!make_bmp_file(c)) goto done;
+
+	defaultbmp(glctx, c);
+	c->filename = "x/cinepak.bmp";
+	c->w = 124; c->h = 64;
+	c->bpp = 24;
+	c->compression = CMPR_CVID;
+	c->pal_entries = 0;
+	set_calculated_fields(c);
+	if (!make_bmp_file(c)) goto done;
 
 	retval = 1;
 done:
