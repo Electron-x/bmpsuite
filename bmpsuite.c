@@ -150,6 +150,7 @@ struct context {
 	int ba_fmt;
 	int ba_hdr_size;
 	int huff_lsb; // No longer used
+	int zero_bfOffsetBits; // An offset of zero indicates a packed DIB
 };
 
 static void set_int16(struct context *c, size_t offset, int v)
@@ -1004,7 +1005,7 @@ static void write_fileheader(struct context *c, int offset)
 	// One might think that for BA format, the bitsoffset field would be
 	// relative to the corresponding BM header. But it is not. It is an
 	// absolute file position.
-	set_int32(c,offset+10,c->bitsoffset);
+	set_int32(c,offset+10,(c->zero_bfOffsetBits) ? 0 : c->bitsoffset);
 }
 
 static void write_bitmapcoreheader(struct context *c, int offset)
@@ -1399,6 +1400,12 @@ static int run(struct global_context *glctx, struct context *c)
 	set_calculated_fields(c);
 	c->clr_used = 0;
 	if(!make_bmp_file(c)) goto done;
+
+	defaultbmp(glctx, c);
+	c->filename = "b/pal8-zo.bmp";
+	c->zero_bfOffsetBits = 1;
+	set_calculated_fields(c);
+	if (!make_bmp_file(c)) goto done;
 
 	defaultbmp(glctx, c);
 	c->filename = "q/pal8offs.bmp";
