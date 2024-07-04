@@ -392,12 +392,14 @@ level of support for it is arguably not important.</p>
   <td>4</td>
   <td class=b><img src="rgb24.png"></td>
   <td class=b><img src="../q/devicergb.bmp"></td>
-  <td>This v4 bitmap already contains colors that are adapted to the output
+  <td>
+   This v4 bitmap already contains colors that are adapted to the output
    device and has been marked accordingly. All primaries are set to the
    same endpoints (results in a greyscale image) to see if they are ignored
    by the color manager.
-   This format was dropped shortly after its introduction (probably because
-   of its device dependency).</td>
+   This format was dropped shortly after its introduction. Presumably
+   because such device-dependent image data can also be saved with the
+   old v3 structure.</td>
  </tr>
 
  <tr>
@@ -405,12 +407,15 @@ level of support for it is arguably not important.</p>
   <td>4</td>
   <td class=b><img src="cmyk.png"></td>
   <td class=b><img src="../q/cmyk.bmp"></td>
-  <td>A v4 bitmap with device-dependent CMYK data (the RGB color values
+  <td>
+   A v4 bitmap with device-dependent CMYK data (the RGB color values
    were simply inverted here). All primaries are set to the same endpoints
    (results in a greyscale image) to see if they are ignored by the color
    manager.
-   This format was dropped shortly after its introduction (probably because
-   of its device dependency).</td>
+   This format was dropped shortly after its introduction. Presumably
+   because this representation of the image data can also be saved with
+   the old v3 structure. However, the BI_CMYK flag had to be introduced
+   for this.</td>
  </tr>
 
  <tr>
